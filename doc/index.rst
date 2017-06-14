@@ -32,6 +32,7 @@ Welcome to fwdpy11's documentation!
     pages/rng
     pages/regions
     pages/model_params
+    pages/recorders
 
 .. toctree::
     :caption: Examples
