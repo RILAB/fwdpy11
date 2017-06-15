@@ -8,7 +8,7 @@
 
 struct recorder_data
 {
-    std::size_t generation;
+    std::uint32_t generation;
     double wbar, s1, s2;
 };
 
