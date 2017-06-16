@@ -34,12 +34,12 @@ cfg['include_dirs'] = [ fp11.get_includes(), fp11.get_fwdpp_includes() ]
 
 namespace py = pybind11;
 
-struct recorder
+struct recorder_with_func
 {
     mutable std::vector<recorder_data> data;
     py::function f;
     mutable recorder_data d;
-    recorder(const std::uint32_t simlen, py::function f_)
+    recorder_with_func(const std::uint32_t simlen, py::function f_)
         : data(std::vector<recorder_data>()), f(f_)
     {
         data.reserve(simlen);
@@ -70,27 +70,37 @@ struct recorder
 };
 
 static_assert(
-    std::is_convertible<recorder, fwdpy11::singlepop_temporal_sampler>::value,
+    std::is_convertible<recorder_with_func, fwdpy11::singlepop_temporal_sampler>::value,
     "oops");
 
 PYBIND11_MAKE_OPAQUE(std::vector<recorder_data>);
 
 PYBIND11_PLUGIN(sampler_pyfunction)
 {
-    pybind11::module m("sampler_pyfunction", "Example of temporal sampler in C++");
+    pybind11::module m("sampler_pyfunction",
+                       "Example of temporal sampler in C++");
 
-    PYBIND11_NUMPY_DTYPE(recorder_data, generation, wbar, s1, s2);
-
-    py::bind_vector<std::vector<recorder_data>>(m, "VecRecorderData",
-                                                py::buffer_protocol());
-
-    py::class_<recorder>(m, "cppRecorderFunc")
+    try
+        {
+            PYBIND11_NUMPY_DTYPE(recorder_data, generation, wbar, s1, s2);
+        }
+    catch (...)
+        {
+        }
+    try
+        {
+            py::bind_vector<std::vector<recorder_data>>(m, "VecRecorderData",
+                                                        py::buffer_protocol());
+        }
+    catch (...)
+        {
+        }
+    py::class_<recorder_with_func>(m, "cppRecorderFunc")
         .def(py::init<std::uint32_t, py::function>())
-        .def_readonly("data", &recorder::data)
+        .def_readonly("data", &recorder_with_func::data)
         .def("__call__",
-             [](const recorder& r, const fwdpy11::singlepop_t& pop) -> void {
-                 r(pop);
-             });
+             [](const recorder_with_func& r,
+                const fwdpy11::singlepop_t& pop) -> void { r(pop); });
 
     return m.ptr();
 }
