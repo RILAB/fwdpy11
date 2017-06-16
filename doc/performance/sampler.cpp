@@ -83,7 +83,7 @@ PYBIND11_PLUGIN(sampler)
                                                 py::buffer_protocol());
 
     py::class_<recorder>(m, "cppRecorder")
-        .def(py::init<double>())
+        .def(py::init<std::uint32_t>())
         .def_readonly("data", &recorder::data)
         .def("__call__",
              [](const recorder& r, const fwdpy11::singlepop_t& pop) -> void {
