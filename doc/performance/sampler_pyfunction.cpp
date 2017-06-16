@@ -26,21 +26,24 @@ cfg['include_dirs'] = [ fp11.get_includes(), fp11.get_fwdpp_includes() ]
 #include <cstdint>
 #include <type_traits>
 
-    struct recorder_data
+struct genetic_values_per_diploid
 {
     std::uint32_t generation;
-    double wbar, s1, s2;
+    std::uint32_t individual;
+    double g, s1, s2;
 };
 
 namespace py = pybind11;
 
 struct recorder_with_func
 {
-    mutable std::vector<recorder_data> data;
+    mutable std::vector<genetic_values_per_diploid> data;
+    //Our C++ recorder stores a python function
     py::function f;
-    mutable recorder_data d;
+    mutable genetic_values_per_diploid d;
+    //We need to construct it with a function/callable:
     recorder_with_func(const std::uint32_t simlen, py::function f_)
-        : data(std::vector<recorder_data>()), f(f_)
+        : data(std::vector<genetic_values_per_diploid>()), f(f_)
     {
         data.reserve(simlen);
     }
@@ -48,54 +51,48 @@ struct recorder_with_func
     void
     operator()(const fwdpy11::singlepop_t& pop) const
     {
-        double w = 0., s1 = 0., s2 = 0.;
+        std::uint32_t i = 0;
+        d.generation = pop.generation;
         for (auto&& dip : pop.diploids)
             {
-                w += dip.w;
+                d.individual = i++;
+                d.g = dip.g;
+                d.s1=d.s2=0.;
                 for (auto&& key : pop.gametes[dip.first].smutations)
                     {
-                        s1 += pop.mutations[key].s;
+                        d.s1 += pop.mutations[key].s;
                     }
                 for (auto&& key : pop.gametes[dip.second].smutations)
                     {
-                        s2 += pop.mutations[key].s;
+                        d.s2 += pop.mutations[key].s;
                     }
+                data.push_back(d);
             }
-        d.generation = pop.generation;
-        d.wbar = w;
-        d.s1 = s1 / static_cast<double>(pop.N);
-        d.s2 = s2 / static_cast<double>(pop.N);
-        data.push_back(d);
+        //After we do our analysis, we send the data
+        //to the Python function and clear out our 
+        //C++ vector.
+        f(&data);
+        data.clear();
     }
 };
 
-static_assert(
-    std::is_convertible<recorder_with_func, fwdpy11::singlepop_temporal_sampler>::value,
-    "oops");
 
-PYBIND11_MAKE_OPAQUE(std::vector<recorder_data>);
+PYBIND11_MAKE_OPAQUE(std::vector<genetic_values_per_diploid>);
 
 PYBIND11_PLUGIN(sampler_pyfunction)
 {
-    pybind11::module m("sampler_pyfunction",
-                       "Example of temporal sampler in C++");
+    pybind11::module m(
+        "sampler_pyfunction",
+        "Example of temporal sampler in C++ that holds a Python function.");
 
-    try
-        {
-            PYBIND11_NUMPY_DTYPE(recorder_data, generation, wbar, s1, s2);
-        }
-    catch (...)
-        {
-        }
-    try
-        {
-            py::bind_vector<std::vector<recorder_data>>(m, "VecRecorderData",
-                                                        py::buffer_protocol());
-        }
-    catch (...)
-        {
-        }
+    PYBIND11_NUMPY_DTYPE(genetic_values_per_diploid, generation, individual,
+                         g,s1,s2);
+
+    py::bind_vector<std::vector<genetic_values_per_diploid>>(
+        m, "VecGeneticValues", py::buffer_protocol());
     py::class_<recorder_with_func>(m, "cppRecorderFunc")
+        //The constructor for our Python type needs
+        //to have a function passed to it:
         .def(py::init<std::uint32_t, py::function>())
         .def_readonly("data", &recorder_with_func::data)
         .def("__call__",
