@@ -35,7 +35,7 @@ To get the g,e, and w fields of a diploid:
 
 .. ipython:: python
 
-    dip_traits = np.array(pop.diploids.trait_array())
+    dip_traits = np.array(pop.diploids)
     dip_traits.dtype
 
 You can easily get mean fitness, etc., now:
@@ -61,6 +61,10 @@ What's the fastest way to get mean fitness?
 .. ipython:: python
 
     %timeit np.array(pop.diploids.trait_array())['w'].mean()
+
+.. ipython:: python
+
+    %timeit np.array(pop.diploids,copy=False)['w'].mean()
 
 .. ipython:: python
 
