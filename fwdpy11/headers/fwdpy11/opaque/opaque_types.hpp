@@ -59,33 +59,28 @@ namespace fwdpy11
         //! Fitness.  This is not necessarily written to by a simulation.
         double w;
         //! Constructor
-        diploid_t() noexcept : first(first_type()),
-                               second(second_type()),
-                               label(0),
-                               g(0.),
-                               e(0.),
-                               w(1.)
-        {
-        }
+        // diploid_t() noexcept
+        //    : first(first_type()), second(second_type()), label(0), g(0.),
+        //      e(0.), w(1.)
+        //{
+        //}
         //! Construct from two indexes to gametes
-        diploid_t(first_type g1, first_type g2) noexcept : first(g1),
-                                                           second(g2),
-                                                           label(0),
-                                                           g(0.),
-                                                           e(0.),
-                                                           w(1.)
-        {
-        }
-
-        inline bool
-        operator==(const diploid_t& dip) const noexcept
-        //! Required for py::bind_vector
-        {
-            return this->first == dip.first && this->second == dip.second
-                   && this->w == dip.w && this->g == dip.g && this->e == dip.e
-                   && this->label == dip.label;
-        }
+        // diploid_t(first_type g1, first_type g2) noexcept
+        //    : first(g1), second(g2), label(0), g(0.), e(0.), w(1.)
+        //{
+        //}
+        friend bool operator==(const diploid_t&, const diploid_t&) noexcept;
     };
+
+    inline bool
+    operator==(const fwdpy11::diploid_t& lhs,
+               const fwdpy11::diploid_t& rhs) noexcept
+    //! Required for py::bind_vector
+    {
+        return lhs.first == rhs.first && lhs.second == rhs.second
+               && lhs.w == rhs.w && lhs.g == rhs.g && lhs.e == rhs.e
+               && lhs.label == rhs.label;
+    }
 
     //! Typedef for container of diploids
     using dipvector_t = std::vector<diploid_t>;

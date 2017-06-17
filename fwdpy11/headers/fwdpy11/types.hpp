@@ -121,6 +121,7 @@ namespace fwdpy11
             for (auto &&d : this->diploids)
                 {
                     d.label = label++;
+                    d.w = 1.0;
                 }
         }
 
@@ -344,6 +345,7 @@ namespace fwdpy11
             for (auto &&d : this->diploids)
                 {
                     d[0].label = label++;
+                    d[0].w = 1.0;
                 }
         }
         explicit multilocus_t(
@@ -363,6 +365,7 @@ namespace fwdpy11
             for (auto &&d : this->diploids)
                 {
                     d[0].label = label++;
+                    d[0].w = 1.0;
                 }
         }
 

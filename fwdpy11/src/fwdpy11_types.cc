@@ -142,7 +142,7 @@ PYBIND11_PLUGIN(fwdpy11_types)
         m, "SingleLocusDiploid",
         "Diploid data type for a single (usually contiguous) genomic region")
         .def(py::init<>())
-        .def(py::init<std::size_t, std::size_t>())
+        //.def(py::init<std::size_t, std::size_t>())
         .def_readonly("first", &fwdpy11::diploid_t::first,
                       "Key to first gamete. (read-only)")
         .def_readonly("second", &fwdpy11::diploid_t::second,
@@ -156,18 +156,22 @@ PYBIND11_PLUGIN(fwdpy11_types)
                       "Index of the diploid in its deme")
         .def("__getstate__",
              [](const fwdpy11::diploid_t& d) {
-                 return py::make_tuple(d.first, d.second, d.w, d.g, d.e);
+                 return py::make_tuple(d.first, d.second, d.w, d.g, d.e,
+                                       d.label);
              })
         .def("__setstate__", [](fwdpy11::diploid_t& d, py::tuple t) {
-            new (&d) fwdpy11::diploid_t(t[0].cast<std::size_t>(),
-                                        t[1].cast<std::size_t>());
+            new (&d) fwdpy11::diploid_t();
+            d.first = t[0].cast<std::size_t>();
+            d.second = t[1].cast<std::size_t>();
             d.w = t[2].cast<double>();
             d.g = t[3].cast<double>();
             d.e = t[4].cast<double>();
+            d.label = t[4].cast<std::size_t>();
         });
 
+    PYBIND11_NUMPY_DTYPE(fwdpy11::diploid_t, first, second, g, e, w, label);
     py::bind_vector<fwdpy11::dipvector_t>(
-        m, "DiploidContainer",
+        m, "DiploidContainer", py::buffer_protocol(),
         "C++ representation of a list of "
         ":class:`fwdpy11.fwdpy11_types."
         "SingleLocusDiploid`.  Typically, access will be read-only.")
@@ -285,10 +289,9 @@ PYBIND11_PLUGIN(fwdpy11_types)
 			 )delim");
 
     py::bind_vector<std::vector<fwdpy11::dipvector_t>>(
-        m, "VecDiploidContainer",
-        "Vector of "
-        ":class:`fwdpy11.fwdpy11_types."
-        "SingleLocusDiploid`.")
+        m, "VecDiploidContainer", "Vector of "
+                                  ":class:`fwdpy11.fwdpy11_types."
+                                  "SingleLocusDiploid`.")
         .def("trait_array",
              [](const std::vector<fwdpy11::dipvector_t>& diploids) {
                  std::vector<diploid_traits> rv;
@@ -457,10 +460,9 @@ PYBIND11_PLUGIN(fwdpy11_types)
         )delim");
 
     py::bind_vector<fwdpy11::mcont_t>(
-        m, "MutationContainer",
-        "C++ representation of a list of "
-        ":class:`fwdpy11.fwdpp_types.Mutation`.  "
-        "Typically, access will be read-only.")
+        m, "MutationContainer", "C++ representation of a list of "
+                                ":class:`fwdpy11.fwdpp_types.Mutation`.  "
+                                "Typically, access will be read-only.")
         .def("array",
              [](const fwdpy11::mcont_t& mc) {
                  std::vector<flattened_popgenmut> rv;
@@ -502,10 +504,9 @@ PYBIND11_PLUGIN(fwdpy11_types)
     // Expose the type based on fwdpp's "sugar"
     // layer
     py::class_<fwdpy11::singlepop_t, singlepop_sugar_base>(
-        m, "SlocusPop",
-        "Population object representing a single "
-        "deme and a "
-        "single genomic region.")
+        m, "SlocusPop", "Population object representing a single "
+                        "deme and a "
+                        "single genomic region.")
         .def(py::init<unsigned>(), "Construct with an unsigned integer "
                                    "representing the initial "
                                    "population size.")
@@ -545,9 +546,8 @@ PYBIND11_PLUGIN(fwdpy11_types)
                 const fwdpy11::singlepop_t& rhs) { return lhs == rhs; });
 
     py::class_<fwdpy11::multilocus_t, multilocus_sugar_base>(
-        m, "MlocusPop",
-        "Representation of a multi-locus, single "
-        "deme system.")
+        m, "MlocusPop", "Representation of a multi-locus, single "
+                        "deme system.")
         .def(py::init<unsigned, unsigned>(), py::arg("N"), py::arg("nloci"),
              "Construct with population size and "
              "number of loci.")
