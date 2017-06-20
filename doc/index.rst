@@ -158,6 +158,12 @@ fwdpy11.demography
     :members:
     :show-inheritance:
 
+fwdpy11 C++ API
+==================
+
+.. doxygenindex::
+    :project: fwdpy11
+
 Indices and tables
 ==================
 
